@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic ") #-Werror
 SET ( CHAPTER_3_SOURCES
         ####--Chapter 3--####
         3_1_Berkeley_sockets_tcp_server
-        #3_2_Berkeley_sockets_tcp_client
+        3_2_Berkeley_sockets_tcp_client
 )
 
 foreach(source_file ${CHAPTER_3_SOURCES})
