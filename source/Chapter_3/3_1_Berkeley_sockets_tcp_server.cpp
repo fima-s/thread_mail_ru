@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <thread>
 
 int main() {
 
@@ -15,7 +16,6 @@ int main() {
     }
 
     sockaddr_in sa;
-
     sa.sin_family = AF_INET;
     sa.sin_port = htons(8080);
     // htons тут нужен, что преобразовать номер порта в сетевой порядок байт.
@@ -47,8 +47,21 @@ int main() {
 
     while ((socket_connect_fd = accept(socket_fd_server, nullptr, nullptr)) > 0) {
         char buffer[1024];
-        int res = recv(socket_connect_fd, buffer, sizeof(buffer) - 1, MSG_NOSIGNAL);
+        int len = recv(socket_connect_fd, buffer, sizeof(buffer) - 1, MSG_NOSIGNAL);
         // MSG_NOSIGNAL это флаг, который говорит, что не надо отправлять сигнал SIGPIPE, если сокет закрыт
+        if (len == -1) {
+            std::cerr << "Error receiving message" << std::endl;
+            close(socket_connect_fd);
+            continue;
+        }
+        buffer[len] = '\0'; // добавляем нулевой символ в конец строки
+
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+
+        std::cout << "Recieved message: " << buffer << std::endl;
+        std::string response = std::string{buffer, len};
+        len = send(socket_connect_fd, response.c_str(), len, MSG_NOSIGNAL);
+        close(socket_connect_fd);
     }
 
     return 0;
