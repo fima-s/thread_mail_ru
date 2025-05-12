@@ -164,7 +164,7 @@ int main()
         return -1;
     }
 
-    std::cout << "Received message from message: " << buffer << std::endl;
+    std::cout << "Received message from server: " << buffer << std::endl;
 
     return 0;
 }

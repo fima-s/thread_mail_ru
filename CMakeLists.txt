@@ -8,6 +8,8 @@ SET ( CHAPTER_3_SOURCES
         ####--Chapter 3--####
         3_1_Berkeley_sockets_tcp_server
         3_2_Berkeley_sockets_tcp_client
+        3_3_MultiPlexServerSelect
+        3_4_MultiPlexClientSelect
 )
 
 foreach(source_file ${CHAPTER_3_SOURCES})
