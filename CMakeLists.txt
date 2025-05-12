@@ -14,7 +14,7 @@ foreach(source_file ${CHAPTER_3_SOURCES})
         #message("DEBUG = " ${CMAKE_CURRENT_SOURCE_DIR}/source/Chapter_3/)
         #message("DEBUG = " ${source_file}.cpp)
 
-        add_executable(${source_file}.cpp ${CMAKE_CURRENT_SOURCE_DIR}/source/Chapter_3/${source_file}.cpp)
+        add_executable(${source_file}.x ${CMAKE_CURRENT_SOURCE_DIR}/source/Chapter_3/${source_file}.cpp)
 endforeach(source_file)
 
 
