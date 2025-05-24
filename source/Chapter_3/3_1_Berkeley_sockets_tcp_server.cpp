@@ -57,6 +57,7 @@ public:
 
     int readMesssage(int socket_connect_fd, std::string &res) const {
         std::string message_buffer ("\0", 1024);
+        // MSG_NOSIGNAL это флаг, который говорит, что не надо отправлять сигнал SIGPIPE, если сокет закрыт
         int len = recv(socket_connect_fd, message_buffer.data(), message_buffer.size() - 1, MSG_NOSIGNAL);
 
         if (len > 0) {
@@ -68,7 +69,7 @@ public:
         return len;
     }
 
-    int sendResponce(int socket_connect_fd, std::string responce) const {
+    int sendResponse(int socket_connect_fd, std::string responce) const {
         std::string answer = std::move(responce);
         return send(socket_connect_fd, answer.c_str(), answer.size(), MSG_NOSIGNAL);
     }
@@ -106,7 +107,7 @@ int main() {
 
         std::cout << "Recieved message: " << buffer << std::endl;
         std::string response = std::move(buffer);
-        server.sendResponce(socket_connect_fd, response);
+        server.sendResponse(socket_connect_fd, response);
         close(socket_connect_fd);
     }
 
