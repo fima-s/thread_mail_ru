@@ -1,4 +1,3 @@
-
 #include <netinet/in.h>
 #include <linux/socket.h>
 #include <sys/types.h>
@@ -12,6 +11,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <cstring>
 
 int set_nonblock(int fd) {
     int flags;
@@ -24,6 +24,9 @@ int set_nonblock(int fd) {
     return ioctl(fd, FIOBIO, & flags);
 #endif
 }
+
+// int flags = fcntl(client_fd, F_GETFL, 0);
+// fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 
 class Server final
 {
@@ -70,22 +73,12 @@ public:
         return accept(m_socket_fd_server, nullptr, nullptr);
     }
 
-    int readMesssage(int socket_connect_fd, std::string &res) const {
-        std::string message_buffer ("\0", 1024);
-        int len = recv(socket_connect_fd, message_buffer.data(), message_buffer.size() - 1, MSG_NOSIGNAL);
-
-        if (len > 0) {
-            message_buffer.resize(len);
-            message_buffer[len - 1] = '\0';
-            res = std::move(message_buffer);
-        }
-
-        return len;
+    int readMesssage(int socket_connect_fd, char *message_buffer, std::size_t buffer_size) const {
+        return recv(socket_connect_fd, message_buffer, buffer_size, MSG_NOSIGNAL);
     }
 
-    int sendResponse(int socket_connect_fd, std::string response) const {
-        std::string answer = std::move(response);
-        return send(socket_connect_fd, answer.c_str(), answer.size(), MSG_NOSIGNAL);
+    int sendResponse(int socket_connect_fd, char *message_buffer, std::size_t buffer_size) const {
+        return send(socket_connect_fd, message_buffer, buffer_size, MSG_NOSIGNAL);
     }
 
     ~Server() { close(m_socket_fd_server); }
@@ -99,8 +92,8 @@ private:
 
 int main()
 {
-    Server server(AF_INET, 7777);
-    //set_nonblock(server.getServerSocket());
+    Server server(AF_INET, 7771);
+    set_nonblock(server.getServerSocket());
     server.initServer();
 
     fd_set readfds;
@@ -149,25 +142,37 @@ int main()
             else {
                 for (auto clientSocketIter = clientConnectedSockets.begin(); clientSocketIter != clientConnectedSockets.end();) {
                     if (FD_ISSET(*clientSocketIter, &readfds)) {
-                        std::string clientMessageBuffer;
+                        char clientMessageBuffer[1024];
+                        auto lenBuffer = sizeof(clientMessageBuffer);
+
+                        std::memset(clientMessageBuffer, '\0', sizeof(clientMessageBuffer));
+
                         int clientSocket = *clientSocketIter;
 
                         int len = server.readMesssage(clientSocket, clientMessageBuffer);
                         if (len > 0) {
                             for (const auto& fd : clientConnectedSockets) {
-                                std::string responseToAll = std::string{"Cliend with id = "}
-                                                       .append(std::to_string(clientSocket)).append(" says: ").append(clientMessageBuffer);
-                                server.sendResponse(fd, std::move(responseToAll));
+                                if (fd != clientSocket) {
+                                    std::string responseToAll = std::string{"Cliend with id = "}
+                                                       .append(std::to_string(clientSocket)).append(" says: ").append(clientMessageBuffer).append("\n");
+                                    server.sendResponse(fd, responseToAll.data());
+                                }
                             }
-                            server.sendResponse(clientSocket, std::move(clientMessageBuffer));
+                            server.sendResponse(clientSocket, clientMessageBuffer);
                             ++clientSocketIter;
                         }
-                        else if (len == 0) {
+                        else if (len == 0 && errno != EAGAIN) {
                             // len = 0 означет что клиент вывал close или shutdown(SHUT_WR)
-                            std::cout << "client " << clientSocket << "disconnected " << std::endl;
+                            std::cout << "client " << clientSocket << " disconnected " << std::endl;
+                            shutdown(clientSocket, SHUT_RDWR);
+                            close(clientSocket);
                             clientSocketIter = clientConnectedSockets.erase(clientSocketIter);
                         }
+                        else
+                            continue;
                     }
+                    else
+                        ++clientSocketIter;
                 }
             }
         }
