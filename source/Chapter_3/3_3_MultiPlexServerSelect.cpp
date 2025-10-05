@@ -73,7 +73,7 @@ public:
         return accept(m_socket_fd_server, nullptr, nullptr);
     }
 
-    int readMesssage(int socket_connect_fd, char *message_buffer, std::size_t buffer_size) const {
+    int readMesssage(int socket_connect_fd, char* message_buffer, std::size_t buffer_size) const {
         return recv(socket_connect_fd, message_buffer, buffer_size, MSG_NOSIGNAL);
     }
 
@@ -143,22 +143,22 @@ int main()
                 for (auto clientSocketIter = clientConnectedSockets.begin(); clientSocketIter != clientConnectedSockets.end();) {
                     if (FD_ISSET(*clientSocketIter, &readfds)) {
                         char clientMessageBuffer[1024];
-                        auto lenBuffer = sizeof(clientMessageBuffer);
+                        //auto lenBuffer = sizeof(clientMessageBuffer);
 
                         std::memset(clientMessageBuffer, '\0', sizeof(clientMessageBuffer));
 
                         int clientSocket = *clientSocketIter;
 
-                        int len = server.readMesssage(clientSocket, clientMessageBuffer);
+                        int len = server.readMesssage(clientSocket, clientMessageBuffer, sizeof(clientMessageBuffer));
                         if (len > 0) {
                             for (const auto& fd : clientConnectedSockets) {
                                 if (fd != clientSocket) {
                                     std::string responseToAll = std::string{"Cliend with id = "}
                                                        .append(std::to_string(clientSocket)).append(" says: ").append(clientMessageBuffer).append("\n");
-                                    server.sendResponse(fd, responseToAll.data());
+                                    server.sendResponse(fd, responseToAll.data(), responseToAll.size());
                                 }
                             }
-                            server.sendResponse(clientSocket, clientMessageBuffer);
+                            server.sendResponse(clientSocket, clientMessageBuffer, sizeof(clientMessageBuffer));
                             ++clientSocketIter;
                         }
                         else if (len == 0 && errno != EAGAIN) {

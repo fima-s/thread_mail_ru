@@ -8,6 +8,11 @@
 #include <poll.h>
 #include <arpa/inet.h>
 
+#include <sstream>
+#include <thread>
+#include <vector>
+
+
 int recv_with_timeout(int socket_fd_client, char *buffer, std::size_t buffer_size, int time_out_in_sec)
 {
     struct pollfd pfd[1];
@@ -147,24 +152,78 @@ private:
 
 int main()
 {
-    Client client(8080, "127.0.0.1");
-    client.initClient();
+    // Client client(8080, "127.0.0.1");
+    // client.initClient();
 
-    std::string message = "Hello, server!";
+    // std::string message = "Hello, server!";
 
-    if (client.sendMessage(message) < 0) {
-        std::cerr << "Error sending message" << std::endl;
-        return -1;
+    // if (client.sendMessage(message) < 0) {
+    //     std::cerr << "Error sending message" << std::endl;
+    //     return -1;
+    // }
+
+    // std::string buffer(1024, '\0');
+
+    // if (client.recieveMessageWithTimeout(buffer.data(), buffer.length(), 5) < 0) {
+    //     std::cerr << "Error receiving message" << std::endl;
+    //     return -1;
+    // }
+
+    // std::cout << "Received message from server: " << buffer << std::endl;
+
+
+    auto MultiClientRequest = [](std::size_t port_number, const std::string& current_ipaddr) {
+        Client client(port_number, current_ipaddr);
+        client.initClient();
+
+        std::ostringstream osstr;
+        osstr << std::this_thread::get_id();
+        std::string message = "Hello, server from thread: " + osstr.str() + '\n';
+
+        while (true) {
+            if (client.sendMessage(message) < 0 )
+                std::cerr << "Error sending message" << std::endl;
+
+            std::string buffer(1024, '\0');
+            if (client.recieveMessageWithTimeout(buffer.data(), buffer.length(), 1) < 0) {
+                std::cerr << "Error receiving message" << std::endl;
+            }
+            else {
+                std::cout << "Received message from server: " << buffer << std::endl;
+            }
+        }
+    };
+
+    std::vector<std::thread> threadPool;
+
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+    threadPool.emplace_back(MultiClientRequest, 8080, "127.0.0.1");
+
+    for (std::thread& t : threadPool) {
+        t.join();
     }
-
-    std::string buffer(1024, '\0');
-
-    if (client.recieveMessageWithTimeout(buffer.data(), buffer.length(), 5) < 0) {
-        std::cerr << "Error receiving message" << std::endl;
-        return -1;
-    }
-
-    std::cout << "Received message from server: " << buffer << std::endl;
 
     return 0;
 }
